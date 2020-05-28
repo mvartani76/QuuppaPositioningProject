@@ -1,2 +1,2 @@
-# QuuppaTagEmulationSwift
-Simple project showing Quuppa Tag Emulation using iOS Swift
+# QuuppaTagEmulation
+Simple projects showing how to emulate Quuppa Tags in BLE
