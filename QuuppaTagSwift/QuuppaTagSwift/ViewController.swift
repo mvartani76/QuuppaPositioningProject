@@ -37,6 +37,7 @@ class ViewController: UIViewController {
 
     // form UUID with correct CRC
     var toBeCRCd = [CUnsignedChar](repeating: 0, count: 8)
+    var tmpUUID = ""
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -62,13 +63,23 @@ class ViewController: UIViewController {
         toBeCRCd[6] = CUnsignedChar(UInt(quupaTagText5.text!, radix:16)!)
         toBeCRCd[7] = CUnsignedChar(UInt(quupaTagText6.text!, radix:16)!)
 
+        var quuppaTagID = ""
+        for i in 2...7 {
+            quuppaTagID = quuppaTagID + String(toBeCRCd[i], radix: 16)
+        }
+        print(quuppaTagID)
+
         print(toBeCRCd)
 
-        var temp = CUnsignedChar(0)
+        var checksum = CUnsignedChar(0)
         for i in 0...7 {
-            temp = u8CRCm(message: toBeCRCd[i], remainderInput: temp)
+            checksum = u8CRCm(message: toBeCRCd[i], remainderInput: checksum)
         }
-        print("temp = \(temp)")
+
+        tmpUUID = String(header, radix:16) + quuppaTagID + String(checksum, radix: 16) + String(checksum, radix: 16) + String(dfField, radix: 16)
+        print(tmpUUID)
+
+        uUIDValue.text = tmpUUID
     }
 
     func u8CRCm(message: UInt8, remainderInput: UInt8) -> UInt8 {
