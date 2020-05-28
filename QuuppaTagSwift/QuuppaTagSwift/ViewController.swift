@@ -29,6 +29,8 @@ class ViewController: UIViewController {
 
     @IBOutlet var measuredPowerValue: UILabel!
 
+    @IBOutlet var beaconButton: UIButton!
+
     let header = CUnsignedChar(0x1a)
     let major = 0x0baa
     let minor = 0x9730
@@ -38,9 +40,14 @@ class ViewController: UIViewController {
     // form UUID with correct CRC
     var toBeCRCd = [CUnsignedChar](repeating: 0, count: 8)
     var tmpUUID = ""
+    var beaconStatus = "OFF"
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        beaconStatus = "OFF"
+        beaconButton.backgroundColor = UIColor(red: 85/255, green: 139/255, blue: 224/255, alpha: 1.0)
+
         headerValue.text = String(format:"%02X", header)
         dfFieldValue.text = String(format:"%llX", dfField)
         majorValue.text = String(format:"%04X", major)
@@ -97,5 +104,17 @@ class ViewController: UIViewController {
         return remainder
     }
 
+    @IBAction func toggleBeaconButton(_ sender: Any) {
+        if beaconStatus == "OFF" {
+            beaconButton.setTitle("ON", for: .normal)
+            beaconStatus = "ON"
+            beaconButton.backgroundColor = UIColor(red: 28/255, green: 85/255, blue: 176/255, alpha: 1.0)
+        } else {
+            beaconButton.setTitle("OFF", for: .normal)
+
+            beaconButton.backgroundColor = UIColor(red: 85/255, green: 139/255, blue: 224/255, alpha: 1.0)
+            beaconStatus = "OFF"
+        }
+    }
 }
 
