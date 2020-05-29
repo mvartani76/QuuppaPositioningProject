@@ -7,12 +7,19 @@
 //
 
 import UIKit
+import CoreBluetooth
+import CoreLocation
 
 let CRC8POLY = CUnsignedChar(0x97)
 let WIDTH = CUnsignedChar(8)
 let TOPBIT = CUnsignedChar((1 << (WIDTH - 1)))
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, CBPeripheralManagerDelegate {
+
+    var localBeacon: CLBeaconRegion!
+    var beaconPeripheralData: NSDictionary!
+    var peripheralManager: CBPeripheralManager!
+
     @IBOutlet var headerValue: UILabel!
     @IBOutlet var checksumValue: UILabel!
     @IBOutlet var dfFieldValue: UILabel!
@@ -109,11 +116,43 @@ class ViewController: UIViewController {
             beaconButton.setTitle("ON", for: .normal)
             beaconStatus = "ON"
             beaconButton.backgroundColor = UIColor(red: 28/255, green: 85/255, blue: 176/255, alpha: 1.0)
+            startLocalBeacon()
         } else {
             beaconButton.setTitle("OFF", for: .normal)
 
             beaconButton.backgroundColor = UIColor(red: 85/255, green: 139/255, blue: 224/255, alpha: 1.0)
             beaconStatus = "OFF"
+            stopLocalBeacon()
+        }
+    }
+
+    func startLocalBeacon() {
+        if localBeacon != nil {
+            stopLocalBeacon()
+        }
+        let uuid = UUID(uuidString: "11111111-2222-3333-4444-555555555555")
+        let localBeaconMajor : CLBeaconMajorValue = CLBeaconMajorValue(major)
+        let localBeaconMinor : CLBeaconMinorValue = CLBeaconMinorValue(minor)
+        let identifier = "QuuppaTag"
+
+        localBeacon = CLBeaconRegion(uuid: uuid!, major: localBeaconMajor, minor: localBeaconMinor, identifier: identifier)
+        peripheralManager = CBPeripheralManager(delegate: self, queue: nil, options: nil)
+        beaconPeripheralData = localBeacon.peripheralData(withMeasuredPower: 86)
+    }
+
+    func stopLocalBeacon() {
+        peripheralManager.stopAdvertising()
+        peripheralManager = nil
+        beaconPeripheralData = nil
+        localBeacon = nil
+    }
+
+    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+        if peripheral.state == .poweredOn {
+            peripheralManager.startAdvertising(((beaconPeripheralData as NSDictionary) as! [String : Any]))
+            print("Start Advertising...")
+        } else if peripheral.state == .poweredOff {
+            peripheralManager.stopAdvertising()
         }
     }
 }
