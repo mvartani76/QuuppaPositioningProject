@@ -37,6 +37,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     @IBOutlet var measuredPowerValue: UILabel!
 
     @IBOutlet var beaconButton: UIButton!
+    @IBOutlet var updateUUIDButton: UIButton!
 
     let header = CUnsignedChar(0x1a)
     let major = 0x0baa
@@ -88,22 +89,18 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         toBeCRCd[6] = CUnsignedChar(UInt(quupaTagText5.text!, radix:16)!)
         toBeCRCd[7] = CUnsignedChar(UInt(quupaTagText6.text!, radix:16)!)
 
-        var quuppaTagID = ""
-        for i in 2...7 {
-            quuppaTagID = quuppaTagID + String(toBeCRCd[i], radix: 16)
-        }
+        var quuppaTagID = updateQuuppaTagID(input: toBeCRCd)
+
         print(quuppaTagID)
 
         print(toBeCRCd)
 
-        var checksum = CUnsignedChar(0)
-        for i in 0...7 {
-            checksum = u8CRCm(message: toBeCRCd[i], remainderInput: checksum)
-        }
+        let checksum = calculateChecksum(input: toBeCRCd)
+        print(checksum)
 
-        tmpUUID = String(header, radix:16) + quuppaTagID + String(checksum, radix: 16) + dfField
+        checksumValue.text = String(checksum, radix: 16)
+        (tmpUUID, advUUID) = updateUUID(header: toBeCRCd[1], checksum: checksum, quuppaTagID: toBeCRCd)
         print(tmpUUID)
-        advUUID = String(header, radix:16) + String(toBeCRCd[2], radix:16) + String(toBeCRCd[3], radix:16) + String(toBeCRCd[4], radix:16) + "-" + String(toBeCRCd[5], radix:16) + String(toBeCRCd[6], radix:16) + "-" + String(toBeCRCd[7], radix:16) + String(checksum, radix:16) + "-" + String(dfField0, radix:16) + String(dfField1, radix:16) + "-" + String(dfField2, radix:16) + String(dfField3, radix:16)
         print(advUUID)
         uUIDValue.text = tmpUUID
     }
@@ -123,6 +120,31 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         return remainder
     }
 
+    // Calculate/assemble UUID without and with dashes/hypens
+    func updateUUID(header: UInt8, checksum: UInt8, quuppaTagID: [UInt8]) -> (String, String) {
+        let tmpUUID = String(header) + String(format:"%02X", toBeCRCd[2]) + String(format:"%02X", toBeCRCd[3]) + String(format:"%02X", toBeCRCd[4]) + String(format:"%02X",toBeCRCd[5]) + String(format:"%02X", toBeCRCd[6]) + String(format:"%02X",toBeCRCd[7]) + String(format:"%02X", checksum) + String(format:"%02X", dfField0) + String(format:"%02X", dfField1) + String(format:"%02X", dfField2) + String(format:"%02X", dfField3) + String(format:"%02X", dfField4) + String(format:"%02X", dfField5) + String(format:"%02X", dfField6) + String(format:"%02X", dfField7)
+
+        let advUUID = String(format:"%02X", header) + String(format:"%02X",toBeCRCd[2]) + String(format:"%02X", toBeCRCd[3]) + String(format:"%02X", toBeCRCd[4]) + "-" + String(format:"%02X",toBeCRCd[5]) + String(format:"%02X", toBeCRCd[6]) + "-" + String(format:"%02X",toBeCRCd[7]) + String(format:"%02X", checksum) + "-" + String(format:"%02X", dfField0) + String(format:"%02X", dfField1) + "-" + String(format:"%02X", dfField2) + String(format:"%02X", dfField3) + String(format:"%02X", dfField4) + String(format:"%02X", dfField5) + String(format:"%02X", dfField6) + String(format:"%02X", dfField7)
+
+        return (tmpUUID, advUUID)
+    }
+
+    func calculateChecksum(input: [UInt8]) -> UInt8 {
+        var checksum = CUnsignedChar(0)
+        for i in 0...7 {
+            checksum = u8CRCm(message: input[i], remainderInput: checksum)
+        }
+        return checksum
+    }
+
+    func updateQuuppaTagID(input: [UInt8]) -> String {
+        var quuppaTagID = ""
+        for i in 2...7 {
+            quuppaTagID = quuppaTagID + String(toBeCRCd[i], radix: 16)
+        }
+        return quuppaTagID
+    }
+
     @IBAction func toggleBeaconButton(_ sender: Any) {
         if beaconStatus == "OFF" {
             beaconButton.setTitle("ON", for: .normal)
@@ -138,12 +160,26 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         }
     }
 
+    @IBAction func updateUUID(_ sender: Any) {
+        print("Updating UUID...")
+        toBeCRCd[2] = CUnsignedChar(UInt(quupaTagText1.text!, radix:16)!)
+        toBeCRCd[3] = CUnsignedChar(UInt(quupaTagText2.text!, radix:16)!)
+        toBeCRCd[4] = CUnsignedChar(UInt(quupaTagText3.text!, radix:16)!)
+        toBeCRCd[5] = CUnsignedChar(UInt(quupaTagText4.text!, radix:16)!)
+        toBeCRCd[6] = CUnsignedChar(UInt(quupaTagText5.text!, radix:16)!)
+        toBeCRCd[7] = CUnsignedChar(UInt(quupaTagText6.text!, radix:16)!)
+        var quuppaTagID = updateQuuppaTagID(input: toBeCRCd)
+        let checksum = calculateChecksum(input: toBeCRCd)
+        checksumValue.text = String(checksum, radix:16)
+        (tmpUUID, advUUID) = updateUUID(header: toBeCRCd[1], checksum: checksum, quuppaTagID: toBeCRCd)
+        uUIDValue.text = tmpUUID
+    }
+
     func startLocalBeacon() {
         if localBeacon != nil {
             stopLocalBeacon()
         }
-        tmpUUID = "1a1122334455668767f7db34c4038e5c"
-        print(tmpUUID)
+
         let uuid = UUID(uuidString: advUUID)
         let localBeaconMajor : CLBeaconMajorValue = CLBeaconMajorValue(major)
         let localBeaconMinor : CLBeaconMinorValue = CLBeaconMinorValue(minor)
