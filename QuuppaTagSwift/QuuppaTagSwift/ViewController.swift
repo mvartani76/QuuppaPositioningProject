@@ -41,12 +41,21 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     let header = CUnsignedChar(0x1a)
     let major = 0x0baa
     let minor = 0x9730
-    let dfField = 0x67f7db34c4038e5c
+    let dfField0 = CUnsignedChar(0x67)
+    let dfField1 = CUnsignedChar(0xf7)
+    let dfField2 = CUnsignedChar(0xdb)
+    let dfField3 = CUnsignedChar(0x34)
+    let dfField4 = CUnsignedChar(0xc4)
+    let dfField5 = CUnsignedChar(0x03)
+    let dfField6 = CUnsignedChar(0x8e)
+    let dfField7 = CUnsignedChar(0x5c)
+
     let measuredPower = 0x56
 
     // form UUID with correct CRC
     var toBeCRCd = [CUnsignedChar](repeating: 0, count: 8)
     var tmpUUID = ""
+    var advUUID = ""
     var beaconStatus = "OFF"
 
     override func viewDidLoad() {
@@ -55,6 +64,8 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         beaconStatus = "OFF"
         beaconButton.backgroundColor = UIColor(red: 85/255, green: 139/255, blue: 224/255, alpha: 1.0)
 
+        let dfField = String(dfField0, radix:16) + String(dfField1, radix:16) + String(dfField2, radix:16) + String(dfField3, radix:16) + String(dfField4, radix:16) + String(dfField5, radix:16) + String(dfField6, radix:16) + String(dfField7, radix:16)
+        print(dfField)
         headerValue.text = String(format:"%02X", header)
         dfFieldValue.text = String(format:"%llX", dfField)
         majorValue.text = String(format:"%04X", major)
@@ -90,9 +101,10 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             checksum = u8CRCm(message: toBeCRCd[i], remainderInput: checksum)
         }
 
-        tmpUUID = String(header, radix:16) + quuppaTagID + String(checksum, radix: 16) + String(checksum, radix: 16) + String(dfField, radix: 16)
+        tmpUUID = String(header, radix:16) + quuppaTagID + String(checksum, radix: 16) + dfField
         print(tmpUUID)
-
+        advUUID = String(header, radix:16) + String(toBeCRCd[2], radix:16) + String(toBeCRCd[3], radix:16) + String(toBeCRCd[4], radix:16) + "-" + String(toBeCRCd[5], radix:16) + String(toBeCRCd[6], radix:16) + "-" + String(toBeCRCd[7], radix:16) + String(checksum, radix:16) + "-" + String(dfField0, radix:16) + String(dfField1, radix:16) + "-" + String(dfField2, radix:16) + String(dfField3, radix:16)
+        print(advUUID)
         uUIDValue.text = tmpUUID
     }
 
@@ -130,7 +142,9 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         if localBeacon != nil {
             stopLocalBeacon()
         }
-        let uuid = UUID(uuidString: "11111111-2222-3333-4444-555555555555")
+        tmpUUID = "1a1122334455668767f7db34c4038e5c"
+        print(tmpUUID)
+        let uuid = UUID(uuidString: advUUID)
         let localBeaconMajor : CLBeaconMajorValue = CLBeaconMajorValue(major)
         let localBeaconMinor : CLBeaconMinorValue = CLBeaconMinorValue(minor)
         let identifier = "QuuppaTag"
@@ -154,6 +168,10 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         } else if peripheral.state == .poweredOff {
             peripheralManager.stopAdvertising()
         }
+    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        view.endEditing(true)
+        super.touchesBegan(touches, with: event)
     }
 }
 
