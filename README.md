@@ -1,2 +1,2 @@
-# QuuppaTagEmulation
-Simple projects showing how to emulate Quuppa Tags in BLE
+# Quuppa Positioning Project
+Simple projects showing how to interface with QPE
